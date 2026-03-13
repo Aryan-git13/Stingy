@@ -2,7 +2,7 @@ import axios from "axios";
 import { BASE_URL } from "./constants";
 
 const axiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: "https://stingy-1.onrender.com/api/notes,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
