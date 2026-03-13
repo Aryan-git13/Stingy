@@ -17,7 +17,7 @@ const app = express();
 // Middlewares
 app.use(express.json());
 
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"];
+const allowedOrigins = ["https://mynotes-ebon.vercel.app","http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"];
 
 app.use(cors({
   origin: allowedOrigins,
@@ -279,5 +279,6 @@ const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
 
 module.exports = app;
