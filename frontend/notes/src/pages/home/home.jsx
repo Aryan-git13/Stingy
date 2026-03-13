@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-import Navbar from "../../components/Navbar/Navbar";
-import NoteCard from "../../components/Cards/NoteCard";
-import SearchBar from "../../components/SearchBar/SearchBar";
-import EmptyCard from "../../components/EmptyCard/EmptyCard";
-import AddEditNotes from "./AddEditNotes";
+import Navbar from "../../components/navbar/navbar";
+import NoteCard from "../../components/cards/notecard";
+import SearchBar from "../../components/searchbar/searchbar";
+import EmptyCard from "../../components/emptycard/emptycard";
+// import AddEditNotes from "./AddEditNotes";
 
 import axiosInstance from "../../utils/axiosinstance";
 
@@ -240,3 +240,4 @@ const Home = () => {
 
 
 export default Home;
+
