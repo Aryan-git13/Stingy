@@ -26,5 +26,6 @@ const NoteCard = ({ note }) => {
   );
 };
 
-export default notecard;
+export default NoteCard;
+
 
