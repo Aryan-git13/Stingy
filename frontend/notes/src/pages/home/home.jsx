@@ -6,7 +6,7 @@ import Navbar from "../../components/navbar/navbar";
 import NoteCard from "../../components/cards/notecard";
 import SearchBar from "../../components/searchbar/searchbar";
 import EmptyCard from "../../components/emptycard/emptycard";
-import AddEditNotes from "./AddEditNotes";
+import AddEditNotes from "./addeditnotes";
 
 import axiosInstance from "../../utils/axiosinstance";
 
@@ -240,5 +240,6 @@ const Home = () => {
 
 
 export default Home;
+
 
 
