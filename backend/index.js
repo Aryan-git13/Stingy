@@ -13,10 +13,9 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// CORS
 const allowedOrigins = [
   "https://mynotes-ebon.vercel.app",
   "http://localhost:5173",
@@ -30,21 +29,12 @@ app.use(
   })
 );
 
-// Handle preflight requests
-app.options("*", cors());
-
-// Connect Database
 connectDB();
 
-// Test Route
 app.get("/", (req, res) => {
   res.json({ message: "Backend running successfully" });
 });
 
-
-// ================= AUTH ROUTES =================
-
-// Create Account
 app.post("/api/notes/create-account", async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
@@ -96,11 +86,8 @@ app.post("/api/notes/create-account", async (req, res) => {
   }
 });
 
-
-// Login
 app.post("/api/notes/login", async (req, res) => {
   try {
-
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -150,12 +137,8 @@ app.post("/api/notes/login", async (req, res) => {
   }
 });
 
-
-// ================= USER ROUTE =================
-
 app.get("/api/notes/get-user", authenticateToken, async (req, res) => {
   try {
-
     const user = await User.findById(req.user.userId);
 
     if (!user) {
@@ -183,13 +166,8 @@ app.get("/api/notes/get-user", authenticateToken, async (req, res) => {
   }
 });
 
-
-// ================= NOTES =================
-
-// Add Note
 app.post("/api/notes/add-note", authenticateToken, async (req, res) => {
   try {
-
     const { title, content, tags } = req.body;
 
     if (!title || !content) {
@@ -223,11 +201,8 @@ app.post("/api/notes/add-note", authenticateToken, async (req, res) => {
   }
 });
 
-
-// Get All Notes
 app.get("/api/notes/get-all-notes", authenticateToken, async (req, res) => {
   try {
-
     const notes = await Note.find({
       userId: req.user.userId
     }).sort({ isPinned: -1 });
@@ -247,11 +222,8 @@ app.get("/api/notes/get-all-notes", authenticateToken, async (req, res) => {
   }
 });
 
-
-// Search Notes
 app.get("/api/notes/search-notes", authenticateToken, async (req, res) => {
   try {
-
     const { query } = req.query;
 
     if (!query) {
@@ -283,9 +255,6 @@ app.get("/api/notes/search-notes", authenticateToken, async (req, res) => {
     });
   }
 });
-
-
-// ================= SERVER =================
 
 const PORT = process.env.PORT || 8000;
 
