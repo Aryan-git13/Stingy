@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
 
 import Navbar from "../../components/Navbar/Navbar";
@@ -238,5 +237,6 @@ const Home = () => {
     </div>
   );
 };
+
 
 export default Home;
