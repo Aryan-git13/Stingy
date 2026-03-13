@@ -1,53 +1,64 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const connectDB = require('./database/db');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const express = require("express");
+const dotenv = require("dotenv");
+const connectDB = require("./database/db");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
-const User = require('./models/user.models.js');
-const Note = require('./models/notes.models.js');
-const authenticateToken = require('./utilities.js');
+const User = require("./models/user.models.js");
+const Note = require("./models/notes.models.js");
+const authenticateToken = require("./utilities.js");
 
-// Load env variables
 dotenv.config();
 
 const app = express();
 
-// Middlewares
+// Middleware
 app.use(express.json());
 
-const allowedOrigins = ["https://mynotes-ebon.vercel.app","http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"];
+// CORS
+const allowedOrigins = [
+  "https://mynotes-ebon.vercel.app",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173"
+];
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true
+  })
+);
+
+// Handle preflight requests
+app.options("*", cors());
 
 // Connect Database
 connectDB();
 
-// Routes
+// Test Route
 app.get("/", (req, res) => {
-  res.json({ data: "hello" });
+  res.json({ message: "Backend running successfully" });
 });
 
 
+// ================= AUTH ROUTES =================
+
 // Create Account
-app.post("/create-account", async (req, res) => {
-  const { fullName, email, password } = req.body;
-
-  if (!fullName || !email || !password) {
-    return res.status(400).json({
-      error: true,
-      message: "All fields are required"
-    });
-  }
-
+app.post("/api/notes/create-account", async (req, res) => {
   try {
-    const isUser = await User.findOne({ email });
+    const { fullName, email, password } = req.body;
 
-    if (isUser) {
+    if (!fullName || !email || !password) {
+      return res.status(400).json({
+        error: true,
+        message: "All fields are required"
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
       return res.status(409).json({
         error: true,
         message: "User already exists"
@@ -67,17 +78,18 @@ app.post("/create-account", async (req, res) => {
     const accessToken = jwt.sign(
       { userId: user._id },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "3600s" }
+      { expiresIn: "1h" }
     );
 
-    return res.status(201).json({
+    res.status(201).json({
       error: false,
       message: "Account created successfully",
       accessToken
     });
 
-  } catch {
-    return res.status(500).json({
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
       error: true,
       message: "Server error"
     });
@@ -86,18 +98,17 @@ app.post("/create-account", async (req, res) => {
 
 
 // Login
-app.post("/login", async (req, res) => {
-
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({
-      error: true,
-      message: "Email and password required"
-    });
-  }
-
+app.post("/api/notes/login", async (req, res) => {
   try {
+
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        error: true,
+        message: "Email and password required"
+      });
+    }
 
     const user = await User.findOne({ email });
 
@@ -120,18 +131,19 @@ app.post("/login", async (req, res) => {
     const accessToken = jwt.sign(
       { userId: user._id },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "3600s" }
+      { expiresIn: "1h" }
     );
 
-    return res.json({
+    res.json({
       error: false,
       message: "Login successful",
-      email,
-      accessToken
+      accessToken,
+      email: user.email
     });
 
-  } catch {
-    return res.status(500).json({
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
       error: true,
       message: "Server error"
     });
@@ -139,9 +151,9 @@ app.post("/login", async (req, res) => {
 });
 
 
-// Get User
-app.get("/get-user", authenticateToken, async (req, res) => {
+// ================= USER ROUTE =================
 
+app.get("/api/notes/get-user", authenticateToken, async (req, res) => {
   try {
 
     const user = await User.findById(req.user.userId);
@@ -153,18 +165,18 @@ app.get("/get-user", authenticateToken, async (req, res) => {
       });
     }
 
-    return res.json({
+    res.json({
       user: {
         fullName: user.fullName,
         email: user.email,
         _id: user._id,
         createdOn: user.createdOn
-      },
-      message: ""
+      }
     });
 
-  } catch {
-    return res.status(500).json({
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
       error: true,
       message: "Server error"
     });
@@ -172,38 +184,39 @@ app.get("/get-user", authenticateToken, async (req, res) => {
 });
 
 
+// ================= NOTES =================
+
 // Add Note
-app.post("/add-note", authenticateToken, async (req, res) => {
-
-  const { title, content, tags } = req.body;
-  const userId = req.user.userId;
-
-  if (!title || !content) {
-    return res.status(400).json({
-      error: true,
-      message: "Title and Content required"
-    });
-  }
-
+app.post("/api/notes/add-note", authenticateToken, async (req, res) => {
   try {
+
+    const { title, content, tags } = req.body;
+
+    if (!title || !content) {
+      return res.status(400).json({
+        error: true,
+        message: "Title and Content required"
+      });
+    }
 
     const note = new Note({
       title,
       content,
       tags: tags || [],
-      userId
+      userId: req.user.userId
     });
 
     await note.save();
 
-    return res.json({
+    res.json({
       error: false,
       note,
       message: "Note added successfully"
     });
 
-  } catch {
-    return res.status(500).json({
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
       error: true,
       message: "Server error"
     });
@@ -212,22 +225,22 @@ app.post("/add-note", authenticateToken, async (req, res) => {
 
 
 // Get All Notes
-app.get("/get-all-notes", authenticateToken, async (req, res) => {
-
+app.get("/api/notes/get-all-notes", authenticateToken, async (req, res) => {
   try {
 
     const notes = await Note.find({
       userId: req.user.userId
     }).sort({ isPinned: -1 });
 
-    return res.json({
+    res.json({
       error: false,
       notes,
       message: "All notes retrieved successfully"
     });
 
-  } catch {
-    return res.status(500).json({
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
       error: true,
       message: "Server error"
     });
@@ -236,36 +249,35 @@ app.get("/get-all-notes", authenticateToken, async (req, res) => {
 
 
 // Search Notes
-app.get("/search-notes", authenticateToken, async (req, res) => {
-
-  const { query } = req.query;
-  const userId = req.user.userId;
-
-  if (!query) {
-    return res.status(400).json({
-      error: true,
-      message: "Query is required"
-    });
-  }
-
+app.get("/api/notes/search-notes", authenticateToken, async (req, res) => {
   try {
 
+    const { query } = req.query;
+
+    if (!query) {
+      return res.status(400).json({
+        error: true,
+        message: "Query is required"
+      });
+    }
+
     const notes = await Note.find({
-      userId,
+      userId: req.user.userId,
       $or: [
         { title: { $regex: query, $options: "i" } },
         { content: { $regex: query, $options: "i" } }
       ]
     });
 
-    return res.json({
+    res.json({
       error: false,
       notes,
       message: "Matching notes found"
     });
 
-  } catch {
-    return res.status(500).json({
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
       error: true,
       message: "Server error"
     });
@@ -273,13 +285,12 @@ app.get("/search-notes", authenticateToken, async (req, res) => {
 });
 
 
-// Start Server
+// ================= SERVER =================
+
 const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
-
 module.exports = app;
-
